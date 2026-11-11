@@ -11,9 +11,9 @@ services:
     user: "${PUID}:${PGID}"
     entrypoint: ["/bin/sh", "/download-game.sh"]
     environment:
-      # 核心的静态检查不认 WONTON_SETTING_* 变量（规范 v0.12 说设置按这个名字注入，见 PR 的底座问题），
-      # 写成 :- 空默认只为过检查：运行时核心总会注入设置值，脚本里取不到会自己报错。
-      WONTON_SETTING_GAME: ${WONTON_SETTING_GAME:-}
+      # 核心还没实现 settings（规范 v0.12，PR 未合）时不注入设置变量，:- 默认值与清单默认一致；
+      # 静态检查也不认 WONTON_SETTING_*（见 PR 的底座问题），行为以后不变。
+      WONTON_SETTING_GAME: ${WONTON_SETTING_GAME:-mineclonia}
     volumes:
       - ${WONTON_APP_DATA}:/var/lib/minetest
     configs:
@@ -26,14 +26,14 @@ services:
     user: "${PUID}:${PGID}"
     # 引擎在 path_user 下找 games/ 和 worlds/（LUANTI_USER_PATH 指到数据卷）。
     # 世界按游戏名分目录：换「游戏」设置会另开一个新世界，旧世界和数据都在。
-    # 设置变量写 :- 空默认只为过核心的静态检查（运行时总会注入）；取不到值时引擎报 gameid 缺失。
+    # 设置变量 :- 清单默认：核心还没实现 settings（PR 未合）时不注入，装出来就是默认配置。
     command:
       - "--config"
       - "/config/minetest.conf"
       - "--gameid"
-      - "${WONTON_SETTING_GAME:-}"
+      - "${WONTON_SETTING_GAME:-mineclonia}"
       - "--world"
-      - "/var/lib/minetest/worlds/${WONTON_SETTING_GAME:-}"
+      - "/var/lib/minetest/worlds/${WONTON_SETTING_GAME:-mineclonia}"
     environment:
       LUANTI_USER_PATH: /var/lib/minetest
     volumes:
@@ -61,12 +61,12 @@ configs:
   minetest-conf:
     content: |
       # 由云吞按插件设置生成（settings.schema.json）；要改这些值就在插件详情页改设置。
-      # 设置变量写 :- 空默认只为过核心的静态检查（运行时总会注入，设置都有默认值）。
-      server_name = ${WONTON_SETTING_SERVER_NAME:-}
-      default_game = ${WONTON_SETTING_GAME:-}
-      creative_mode = ${WONTON_SETTING_CREATIVE_MODE:-}
-      enable_damage = ${WONTON_SETTING_ENABLE_DAMAGE:-}
-      max_users = ${WONTON_SETTING_MAX_USERS:-}
+      # 设置变量 :- 清单默认：核心还没实现 settings（PR 未合）时不注入，先按默认值装。
+      server_name = ${WONTON_SETTING_SERVER_NAME:-Luanti}
+      default_game = ${WONTON_SETTING_GAME:-mineclonia}
+      creative_mode = ${WONTON_SETTING_CREATIVE_MODE:-true}
+      enable_damage = ${WONTON_SETTING_ENABLE_DAMAGE:-false}
+      max_users = ${WONTON_SETTING_MAX_USERS:-8}
       # 用这个名字第一个注册的玩家是管理员。
       name = ${WONTON_SETTING_ADMIN_NAME:-}
       # 第一次登录自己设密码，不允许空密码。

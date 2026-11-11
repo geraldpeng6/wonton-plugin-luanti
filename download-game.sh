@@ -3,7 +3,10 @@
 # 一次性服务：每次创建容器都重跑（安装、升级、重建），装过的游戏不重复下载。
 set -eu
 
-GAME="${WONTON_SETTING_GAME:?云吞没把 WONTON_SETTING_GAME 传进来}"
+# 核心还没实现 settings（规范 v0.12，核心 PR 未合）时不注入 WONTON_SETTING_*，
+# 回退到清单默认值；等核心支持后这里拿到的是设置值，行为不变。
+GAME="${WONTON_SETTING_GAME:-mineclonia}"
+[ -n "${WONTON_SETTING_GAME:-}" ] || echo "settings 没注入，用清单默认游戏：$GAME"
 DATA="/var/lib/minetest"
 # gameid（= 解压出来的目录名，引擎按目录名认游戏）→ ContentDB 的包。
 # 包名和“维护中”状态 2026-11-12 在 content.luanti.org 核对过。
@@ -26,16 +29,23 @@ fi
 mkdir -p "$DATA/games"
 
 # 最新 release 的 id 在包接口的 "release" 字段里，下载地址按 release id 拼。
-RELEASE="$(curl -fsSL "https://content.luanti.org/api/packages/$PKG/" |
-	grep -o '"release":[0-9]*' | grep -o '[0-9]*' || true)"
+# 注意下载地址会 302 到第二个域 cdn.content.luanti.org：出网代理要两个域都放行。
+API_URL="https://content.luanti.org/api/packages/$PKG/"
+if ! api_json="$(curl -fsSL "$API_URL" 2>&1)"; then
+	echo "取不到 $API_URL：$api_json（查出网代理是否放行 content.luanti.org）" >&2
+	exit 1
+fi
+RELEASE="$(printf '%s' "$api_json" | grep -o '"release":[0-9]*' | grep -o '[0-9]*' || true)"
 if [ -z "$RELEASE" ]; then
-	echo "取不到 $PKG 的最新版本（content.luanti.org 的包接口没返回 release 字段）" >&2
+	echo "$API_URL 的响应里没有 release 字段：$(printf '%s' "$api_json" | head -c 200)" >&2
 	exit 1
 fi
 
-echo "下载 $PKG release $RELEASE"
-curl -fsSL --retry 3 --connect-timeout 20 -o /tmp/game.zip \
-	"https://content.luanti.org/packages/$PKG/releases/$RELEASE/download/"
+DL_URL="https://content.luanti.org/packages/$PKG/releases/$RELEASE/download/"
+if ! curl -fsSL --retry 3 --connect-timeout 20 -o /tmp/game.zip "$DL_URL" 2>&1; then
+	echo "下载失败：$DL_URL（上面是 curl 的报错；这个地址会 302 到 cdn.content.luanti.org，两个域都要能过出网代理）" >&2
+	exit 1
+fi
 
 # 先解到临时目录，确认包里是单个 games/<gameid> 目录再就位；半途失败不留半个游戏目录。
 TMP="$DATA/games/.downloading-$GAME"
