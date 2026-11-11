@@ -1,43 +1,36 @@
-# 云吞插件模板
+# 沙盒游戏服务器（Luanti）
 
-开发流程见[插件开发指南](https://github.com/wontonapp/wonton-docs/blob/main/develop.md)。
+在自己家里开一个 Luanti（原 Minetest）多人游戏服务器：像 Minecraft 一样挖矿、盖房子、探险的开源体素沙盒，免费、无广告、无内购。孩子和家人用 Luanti 客户端连进来一起玩。
 
-这是一个能安装的示例插件 `app.example.hello`：使用 nginx 官方镜像显示问候页，经网关的 `sso: proxy` 注入用户名，页面显示“你好，<用户名>”。示例没有应用账号、持久化数据或 MCP 工具。
+## 怎么用
 
-## 示例文件
+1. 装好插件，在设置里选游戏（默认 Mineclonia，类 Minecraft；也可以选 VoxeLibre 或官方原版 Minetest Game）。引擎本身不带游戏，装插件时会从 ContentDB（content.luanti.org）下载选中的游戏，第一次安装要多等一会儿。
+2. 电脑、安卓、iPhone 上装 Luanti 客户端：https://www.luanti.org/downloads/
+3. 加入：
+   - 在家里（同一局域网）：客户端「加入游戏」的地址栏填这台主机的局域网地址，端口 30000。安装确认页写明了端口开放在哪个地址上。
+   - 在外面：在云吞 App 的插件详情里打开隧道端口，客户端地址填 `127.0.0.1:30000`。
+4. 第一次进入时自己起玩家名、设密码（不允许空密码），以后用同一个名字进入。
 
-| 路径 | 内容 |
-| --- | --- |
-| `docker-compose.yml` | 示例清单、nginx 服务和三个 `configs` |
-| `web/default.conf.template` | nginx 配置，启用 SSI 回显用户名并提供健康检查入口；只放行来自核心地址（`${WONTON_CORE_ADDRESS}`）的请求，其余来源 403 |
-| `web/index.html` | 问候页 |
-| `web/tokens.css` | 页面主题变量的后备值 |
-| `tabs/` | 示例主页的应用页面图标 |
-| `screenshots/home.png` | 商店详情页的示例截图 |
-| `scripts/smoke-probes.sh` | 检查真实页面和网关注入身份的插件探针 |
+## 设置
 
-从模板创建自己的插件后，替换示例清单、网页和素材；具体步骤见[写插件](https://github.com/wontonapp/wonton-docs/blob/main/develop.md#写插件)。
+都在云吞的插件详情里改，改完服务器自动重建：
 
-## 对着别的栈跑探针
+- **游戏**：装哪个游戏。换了以后服务器会另开一个新世界，原来的世界还在（每个游戏一个世界）。
+- **服务器名称**：客户端服务器列表里显示的名字。
+- **管理员玩家名**：第一个用这个名字注册的玩家是管理员，进游戏后能发 `/grant`、`/kick` 等命令。留空就没有管理员。
+- **建筑模式**（默认开）：物品无限、能飞，适合小孩子自由搭建。
+- **伤害**（默认关）：开了玩家才会受伤、死亡。
+- **人数上限**（默认 8）。
 
-`probes`、`api`、`session` 按 `.wonton/.env` 的 `WONTON_BASE_DOMAIN` 拼核心地址，`up` 起的栈自己写这个键。插件装进别人的栈、或者对着已有环境排查时，把那套栈的基础域名写进 `.wonton/.env`，不要只按实例名猜地址：实例名只是资源名前缀，网关按 Host 认域名，拼错了会回“没有安装”。
+数据都在插件数据目录里：`games/` 是下载的游戏，`worlds/<游戏名>/` 是各游戏的世界（含玩家档案和密码）。备份这个目录就备份了整个服务器。
 
-```bash
-WONTON_BASE_DOMAIN=wonton.localhost
-```
+## 已知限制
 
-## 核心镜像
-
-检查和冒烟默认用套件里的核心镜像（`ghcr.io/wontonapp/wonton-core:main`）；要固定别的核心镜像，在仓库 Settings → Variables 设 `WONTON_CORE_IMAGE`，手动触发“检查”时填的 `core-image` 输入优先。
-
-## 更新开发套件
-
-```bash
-scripts/dev.sh kit-update
-```
-
-在从模板新建的插件仓库中更新套件；本仓库是套件源头，执行时只提示并退出。版本、可选引用和自定义脚本约定见[开发指南](https://github.com/wontonapp/wonton-docs/blob/main/develop.md#更新开发套件)。
+- 没有网页界面：所有设置在云吞的插件详情里，游戏内的管理（发装备、改权限）用游戏里的命令。
+- 引擎的公共服务器列表通告（`server_announce`）默认关闭，这个服务器只有家里人能看见；打开通告需要插件能出网，本插件申请出网只用于下载游戏，不改通告设置。
+- 游戏和世界不会自动升级：重装或升级插件不重复下载游戏；想换游戏的新版本，删掉数据目录里对应的 `games/<游戏名>/` 和 `worlds/<游戏名>/` 再重装插件（世界会重建，玩家档案会丢）。
+- 支持电脑和手机客户端连接；局域网和隧道都走同一个 30000/udp 端口。
 
 ## 图标
 
-`icon.svg` 是本仓库原创线条图标，按本仓库 MIT 许可证分发，见 [NOTICE](NOTICE)。
+`icon.png` 是 Luanti 的官方标志，来源和许可见 [NOTICE](NOTICE)。Luanti 名称和标志是 Luanti 项目的商标。
