@@ -54,12 +54,13 @@ services:
       # 就是 30000/udp 真能答；探测产生的临时 peer 约 7 秒后被服务器静默清理（info 级日志）。
       test:
         - CMD-SHELL
-        - printf '\x4f\x45\x74\x03\x00\x00\x00\x00\x02' | nc -u -w 8 127.0.0.1 30000 | od -An -tx1 | tr -d ' \n' | grep -q 4f457403
+        - printf '\x4f\x45\x74\x03\x00\x00\x00\x00\x02' | timeout 5 nc -u -w 2 127.0.0.1 30000 | od -An -tx1 | tr -d ' \n' | grep -q 4f457403
       interval: 30s
-      # 世界生成（mineclonia 首启跑 stronghold 预备）和整机高负载时应答会慢，实测 5s 会误判。
-      timeout: 12s
+      # busybox 的 nc -u 收到应答也不退出（等满 -w，实测还会双倍）；外层 timeout 兜底。
+      # 世界生成期和整机高负载下应答会慢（实测约 2-4s），超时判失败靠 start_period 内多次重试。
+      timeout: 8s
       start_period: 5m
-      start_interval: 10s
+      start_interval: 5s
 
 configs:
   minetest-conf:
