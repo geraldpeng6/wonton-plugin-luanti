@@ -6,8 +6,8 @@ services:
   # 一次性服务：引擎不自带游戏，从 ContentDB 下载设置里选中的游戏，已存在就跳过（幂等）。
   game-download:
     image: ghcr.io/luanti-org/luanti:5.18.0@sha256:4ebdcd28bbaeead82030e8edcadb89dfe1fad21a74e1672d5ff415a9257e8683
-    # 镜像固定以 uid 30000（minetest）运行，不认 PUID/PGID；两个服务都写 user，
-    # 数据目录按规则交给 PUID:PGID，两边属主一致。
+    # 镜像默认以 uid 30000（minetest）运行；引擎不挑 uid，按插件惯例覆盖成 PUID:PGID，
+    # 两个服务都写同样的 user，数据目录属主一致。
     user: "${PUID}:${PGID}"
     entrypoint: ["/bin/sh", "/download-game.sh"]
     environment:
