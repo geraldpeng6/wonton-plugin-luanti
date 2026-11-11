@@ -36,6 +36,9 @@ services:
       - "/var/lib/minetest/worlds/${WONTON_SETTING_GAME:-mineclonia}"
     environment:
       LUANTI_USER_PATH: /var/lib/minetest
+      # 镜像默认用户（uid 30000）的 HOME 来自 /etc/passwd；按 PUID 覆盖后容器里没有这个用户，
+      # 引擎起不来（实测 5.18.0 报 Cannot create user data directory），显式指到数据卷。
+      HOME: /var/lib/minetest
     volumes:
       - ${WONTON_APP_DATA}:/var/lib/minetest
     configs:
@@ -118,7 +121,8 @@ x-wonton:
   tunnel:
     ports:
       - { service: server, port: 30000, protocol: udp }
-  # 镜像支持 amd64 和 arm64（docker buildx imagetools inspect）；内存按开发栈实测写，见 PR。
+  # 镜像支持 amd64 和 arm64（docker buildx imagetools inspect）。
+  # 内存：mineclonia 空世界世界生成后实测 365M（2026-11-12，5.18.0），留玩家与地图生成余量取 1G。
   requirements:
     arch: [amd64, arm64]
-    memory: 512M
+    memory: 1G
