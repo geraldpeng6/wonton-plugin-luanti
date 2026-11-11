@@ -34,7 +34,7 @@ if [ -z "$RELEASE" ]; then
 fi
 
 echo "下载 $PKG release $RELEASE"
-curl -fSL --retry 3 --connect-timeout 20 -o /tmp/game.zip \
+curl -fsSL --retry 3 --connect-timeout 20 -o /tmp/game.zip \
 	"https://content.luanti.org/packages/$PKG/releases/$RELEASE/download/"
 
 # 先解到临时目录，确认包里是单个 games/<gameid> 目录再就位；半途失败不留半个游戏目录。
