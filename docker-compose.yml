@@ -11,7 +11,7 @@ services:
     user: "${PUID}:${PGID}"
     entrypoint: ["/bin/sh", "/download-game.sh"]
     environment:
-      # 核心还没实现 settings（规范 v0.12，PR 未合）时不注入设置变量，:- 默认值与清单默认一致；
+      # 核心不支持 settings（规范 v0.12）时不注入设置变量，:- 默认值与清单默认一致；
       # 静态检查也不认 WONTON_SETTING_*（见 PR 的底座问题），行为以后不变。
       WONTON_SETTING_GAME: ${WONTON_SETTING_GAME:-mineclonia}
     volumes:
@@ -26,7 +26,7 @@ services:
     user: "${PUID}:${PGID}"
     # 引擎在 path_user 下找 games/ 和 worlds/（LUANTI_USER_PATH 指到数据卷）。
     # 世界按游戏名分目录：换「游戏」设置会另开一个新世界，旧世界和数据都在。
-    # 设置变量 :- 清单默认：核心还没实现 settings（PR 未合）时不注入，装出来就是默认配置。
+    # 设置变量 :- 清单默认：核心不支持 settings 时不注入，装出来就是默认配置。
     command:
       - "--config"
       - "/config/minetest.conf"
@@ -66,7 +66,7 @@ configs:
   minetest-conf:
     content: |
       # 由云吞按插件设置生成（settings.schema.json）；要改这些值就在插件详情页改设置。
-      # 设置变量 :- 清单默认：核心还没实现 settings（PR 未合）时不注入，先按默认值装。
+      # 设置变量 :- 清单默认：核心不支持 settings 时不注入，按默认值装。
       server_name = ${WONTON_SETTING_SERVER_NAME:-Luanti}
       default_game = ${WONTON_SETTING_GAME:-mineclonia}
       creative_mode = ${WONTON_SETTING_CREATIVE_MODE:-true}

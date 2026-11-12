@@ -3,8 +3,8 @@
 # 一次性服务：每次创建容器都重跑（安装、升级、重建），装过的游戏不重复下载。
 set -eu
 
-# 核心还没实现 settings（规范 v0.12，核心 PR 未合）时不注入 WONTON_SETTING_*，
-# 回退到清单默认值；等核心支持后这里拿到的是设置值，行为不变。
+# 核心不支持 settings（规范 v0.12）时不注入 WONTON_SETTING_*，
+# 回退到清单默认值；核心支持时这里拿到的是设置值，行为不变。
 GAME="${WONTON_SETTING_GAME:-mineclonia}"
 [ -n "${WONTON_SETTING_GAME:-}" ] || echo "settings 没注入，用清单默认游戏：$GAME"
 DATA="/var/lib/minetest"
